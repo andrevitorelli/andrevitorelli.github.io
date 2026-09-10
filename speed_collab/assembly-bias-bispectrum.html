@@ -1,0 +1,492 @@
+<title>Assembly-Bias Bispectrum</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  /* ============ LIGHT (default) ============ */
+  :root{
+    color-scheme:light;
+    --ground:#eef1f8;
+    --body-bg:
+      radial-gradient(1200px 700px at 78% -10%, rgba(31,143,163,.10), transparent 60%),
+      radial-gradient(900px 600px at 10% 110%, rgba(217,154,31,.10), transparent 55%),
+      #eef1f8;
+    --card-bg:linear-gradient(150deg,#ffffff,#eef2fb);
+    --slide-shadow:0 24px 60px -30px rgba(30,45,80,.35), inset 0 1px 0 rgba(255,255,255,.6);
+    --grid-line:rgba(30,45,80,.05);
+    --panel-line:#d4dbea;
+    --ink:#1a2138;
+    --muted:#566079;
+    --faint:#8b95af;
+    --gold:#d99a1f;      /* accent fill  (cluster + satellite) */
+    --gold-ink:#8f6410;  /* gold text                          */
+    --cyan:#1f8fa3;      /* accent fill  (field / long mode)   */
+    --cyan-ink:#146c7d;  /* cyan text                          */
+    --gold-dim:rgba(217,154,31,.12);
+    --gold-line:rgba(217,154,31,.42);
+    --cut:#ffffff;       /* cut-out stroke = ground behind shapes */
+    --display:'Archivo','Segoe UI',sans-serif;
+    --serif:'Newsreader',Georgia,serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+
+  /* ============ DARK (system default when no explicit light) ============ */
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --ground:#0a0e1a;
+      --body-bg:
+        radial-gradient(1200px 700px at 78% -10%, rgba(79,195,214,.10), transparent 60%),
+        radial-gradient(900px 600px at 10% 110%, rgba(244,185,66,.08), transparent 55%),
+        #0a0e1a;
+      --card-bg:linear-gradient(150deg, rgba(21,27,48,.85), rgba(8,11,21,.95));
+      --slide-shadow:0 30px 80px -30px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.04);
+      --grid-line:rgba(255,255,255,.025);
+      --panel-line:#26304d;
+      --ink:#e9edf7;
+      --muted:#8b95b2;
+      --faint:#5b6484;
+      --gold:#f4b942;
+      --gold-ink:#dcb768;
+      --cyan:#4fc3d6;
+      --cyan-ink:#83d6e4;
+      --gold-dim:rgba(244,185,66,.14);
+      --gold-line:rgba(244,185,66,.32);
+      --cut:#0b1020;
+    }
+  }
+  /* explicit dark choice wins in both directions */
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --ground:#0a0e1a;
+    --body-bg:
+      radial-gradient(1200px 700px at 78% -10%, rgba(79,195,214,.10), transparent 60%),
+      radial-gradient(900px 600px at 10% 110%, rgba(244,185,66,.08), transparent 55%),
+      #0a0e1a;
+    --card-bg:linear-gradient(150deg, rgba(21,27,48,.85), rgba(8,11,21,.95));
+    --slide-shadow:0 30px 80px -30px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.04);
+    --grid-line:rgba(255,255,255,.025);
+    --panel-line:#26304d;
+    --ink:#e9edf7;
+    --muted:#8b95b2;
+    --faint:#5b6484;
+    --gold:#f4b942;
+    --gold-ink:#dcb768;
+    --cyan:#4fc3d6;
+    --cyan-ink:#83d6e4;
+    --gold-dim:rgba(244,185,66,.14);
+    --gold-line:rgba(244,185,66,.32);
+    --cut:#0b1020;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:var(--body-bg);
+    color:var(--ink);
+    font-family:var(--serif);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px 16px;
+  }
+
+  @media (prefers-reduced-motion:no-preference){
+    body, .slide, .slide *{
+      transition:background-color .25s ease, border-color .25s ease, color .2s ease, fill .25s ease, stroke .25s ease;
+    }
+  }
+
+  /* ---- the slide : 16:9, sized so the whole frame is always visible ---- */
+  .slide{
+    width:min(95vw, 1200px, 155vh);
+    aspect-ratio:16/9;
+    container-type:size;
+    position:relative;
+    background:var(--card-bg);
+    border:1px solid var(--panel-line);
+    border-radius:14px;
+    box-shadow:var(--slide-shadow);
+    overflow:hidden;
+    padding:3.2cqw 3.8cqw;
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr) auto;
+    gap:2cqh;
+  }
+
+  .slide::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size:6.25% 11.11%;
+    pointer-events:none;
+    mask-image:linear-gradient(115deg, rgba(0,0,0,.5), transparent 45%);
+  }
+
+  /* ---- theme toggle ---- */
+  .theme-toggle{
+    position:absolute;
+    top:2.6cqw; right:3cqw;
+    z-index:5;
+    width:3cqw; height:3cqw;
+    min-width:32px; min-height:32px;
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
+    border:1px solid var(--panel-line);
+    border-radius:999px;
+    background:var(--gold-dim);
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .theme-toggle:hover{color:var(--ink);border-color:var(--gold-line);}
+  .theme-toggle:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+  .theme-toggle svg{width:52%;height:52%;min-width:15px;min-height:15px;display:block;}
+  .theme-toggle .t-sun{display:none;}
+  .theme-toggle .t-moon{display:block;}
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]) .theme-toggle .t-sun{display:block;}
+    :root:not([data-theme="light"]) .theme-toggle .t-moon{display:none;}
+  }
+  :root[data-theme="dark"] .theme-toggle .t-sun{display:block;}
+  :root[data-theme="dark"] .theme-toggle .t-moon{display:none;}
+  :root[data-theme="light"] .theme-toggle .t-sun{display:none;}
+  :root[data-theme="light"] .theme-toggle .t-moon{display:block;}
+
+  /* ============ HEADER ============ */
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:1.12cqw;
+    letter-spacing:.26em;
+    text-transform:uppercase;
+    color:var(--cyan-ink);
+    display:flex; align-items:center; gap:1cqw;
+    padding-right:5cqw;
+  }
+  .eyebrow .sep{color:var(--faint);letter-spacing:0;}
+  .eyebrow .tag{color:var(--muted);}
+
+  h1{
+    font-family:var(--display);
+    font-weight:800;
+    font-size:3.9cqw;
+    line-height:1;
+    letter-spacing:-.015em;
+    margin:1cqh 0 0;
+    text-wrap:balance;
+    color:var(--ink);
+  }
+  h1 .x{color:var(--faint);font-weight:600;padding:0 .1em;}
+  h1 .s{color:var(--gold);}
+  h1 .f{color:var(--cyan);}
+
+  .subtitle{
+    font-family:var(--serif);
+    font-style:italic;
+    font-size:1.85cqw;
+    color:var(--muted);
+    margin-top:.7cqh;
+  }
+
+  /* ============ BODY ============ */
+  .body{
+    display:grid;
+    grid-template-columns:1.05fr 1fr;
+    gap:3cqw;
+    align-items:start;
+    min-height:0;
+  }
+  section{min-height:0;}
+
+  .col-head{
+    font-family:var(--mono);
+    font-size:1.08cqw;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--faint);
+    padding-bottom:.8cqh;
+    margin-bottom:1.2cqh;
+    border-bottom:1px solid var(--panel-line);
+  }
+
+  /* --- left : the goal + diagram --- */
+  .goal{
+    font-family:var(--serif);
+    font-size:1.58cqw;
+    line-height:1.32;
+    color:var(--ink);
+    margin:0 0 1.4cqh;
+  }
+  .goal b{color:var(--gold-ink);font-weight:600;font-style:normal;}
+  .goal .em{color:var(--cyan-ink);font-weight:500;}
+
+  figure{margin:0;display:flex;flex-direction:column;align-items:center;}
+  svg.diagram{width:100%;height:auto;max-height:20cqh;display:block;}
+  figcaption{
+    font-family:var(--mono);
+    font-size:.98cqw;
+    color:var(--muted);
+    margin-top:.7cqh;
+    text-align:center;
+    letter-spacing:.02em;
+  }
+
+  /* SVG theme classes */
+  .s-ink{fill:var(--ink);}
+  .s-muted{fill:var(--muted);}
+  .s-gold{fill:var(--gold);}
+  .s-goldink{fill:var(--gold-ink);}
+  .s-cyan{fill:var(--cyan);}
+  .s-cyanink{fill:var(--cyan-ink);}
+  .st-ink{stroke:var(--ink);}
+  .st-cut{stroke:var(--cut);}
+  .st-gold{stroke:var(--gold);}
+  .st-cyan{stroke:var(--cyan);}
+
+  /* --- right : the estimator --- */
+  ol.steps{
+    list-style:none; margin:0; padding:0;
+    display:flex; flex-direction:column; gap:1.15cqh;
+    counter-reset:step;
+  }
+  ol.steps li{
+    display:grid; grid-template-columns:auto 1fr; gap:1.1cqw;
+    align-items:start; counter-increment:step;
+  }
+  ol.steps li::before{
+    content:counter(step);
+    font-family:var(--mono); font-weight:600;
+    font-size:1.2cqw; color:var(--gold-ink);
+    line-height:1; padding-top:.25cqh; min-width:1.5cqw;
+  }
+  ol.steps p{
+    margin:0; font-family:var(--serif);
+    font-size:1.5cqw; line-height:1.28; color:var(--ink);
+  }
+  ol.steps .k{font-family:var(--mono);font-size:.86em;color:var(--cyan-ink);}
+
+  .eqbox{
+    margin-top:1.6cqh;
+    background:linear-gradient(180deg, var(--gold-dim), transparent);
+    border:1px solid var(--gold-line);
+    border-left:3px solid var(--gold);
+    border-radius:8px;
+    padding:1.3cqh 1.4cqw;
+  }
+  .eqbox .lab{
+    font-family:var(--mono); font-size:.95cqw;
+    letter-spacing:.16em; text-transform:uppercase;
+    color:var(--gold-ink); margin-bottom:.8cqh;
+  }
+  .eq{
+    font-family:var(--mono); font-size:1.6cqw;
+    color:var(--ink); line-height:1.4; letter-spacing:.01em;
+  }
+  .eq .big{color:var(--gold-ink);font-weight:600;}
+  .eq .cy{color:var(--cyan-ink);}
+  .eq sub{font-size:.62em;}
+  .eq .note{
+    display:block; font-family:var(--serif); font-style:italic;
+    font-size:1.08cqw; color:var(--muted);
+    margin-top:.8cqh; letter-spacing:0; line-height:1.3;
+  }
+
+  /* ============ FOOTER ============ */
+  .footer{
+    display:grid;
+    grid-template-columns:1fr 1fr 1.25fr;
+    gap:2.6cqw;
+    padding-top:1.4cqh;
+    border-top:1px solid var(--panel-line);
+  }
+  .fitem .ft{
+    font-family:var(--mono); font-size:.95cqw;
+    letter-spacing:.2em; text-transform:uppercase;
+    color:var(--faint); margin-bottom:.7cqh;
+  }
+  .fitem p{
+    margin:0; font-family:var(--serif);
+    font-size:1.3cqw; line-height:1.28; color:var(--muted);
+  }
+  .fitem.warn .ft{color:var(--gold-ink);}
+  .fitem.warn p{color:var(--ink);}
+  .fitem.warn p b{color:var(--gold-ink);font-weight:600;}
+
+  /* ============ PHONE : unlock aspect, stack ============ */
+  @media (max-width:660px){
+    body{padding:14px 10px;align-items:flex-start;}
+    .slide{
+      aspect-ratio:auto;
+      container-type:normal;
+      width:100%;
+      padding:26px 22px;
+      gap:22px;
+    }
+    .slide::before{display:none;}
+    .theme-toggle{top:14px;right:14px;width:36px;height:36px;}
+    .eyebrow{font-size:11px;flex-wrap:wrap;gap:8px;padding-right:44px;}
+    h1{font-size:29px;margin-top:10px;}
+    .subtitle{font-size:16px;}
+    .body{grid-template-columns:1fr;gap:26px;}
+    .col-head{font-size:11px;padding-bottom:8px;margin-bottom:12px;}
+    .goal{font-size:16px;margin-bottom:16px;}
+    svg.diagram{max-height:none;}
+    figcaption{font-size:11px;margin-top:8px;}
+    ol.steps{gap:13px;}
+    ol.steps li::before{font-size:14px;min-width:16px;}
+    ol.steps p{font-size:15px;}
+    .eqbox{margin-top:18px;padding:16px 16px;}
+    .eqbox .lab{font-size:10px;}
+    .eq{font-size:15px;}
+    .eq .note{font-size:13px;}
+    .footer{grid-template-columns:1fr;gap:18px;padding-top:16px;}
+    .fitem .ft{font-size:10px;}
+    .fitem p{font-size:14px;}
+  }
+</style>
+
+<div class="slide">
+
+  <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle light or dark theme">
+    <svg class="t-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    <svg class="t-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+  </button>
+
+  <!-- ============ HEADER ============ -->
+  <header>
+    <div class="eyebrow">
+      <span>Project proposal</span>
+      <span class="sep">/</span>
+      <span class="tag">Large-scale structure &middot; galaxy&ndash;halo connection</span>
+    </div>
+    <h1>The Cluster<span class="x">&times;</span><span class="s">Satellite</span><span class="x">&times;</span><span class="f">Field</span> Bispectrum</h1>
+    <div class="subtitle">A configuration-resolved estimator for galaxy-cluster assembly bias</div>
+  </header>
+
+  <!-- ============ BODY ============ -->
+  <div class="body">
+
+    <!-- LEFT : goal + diagram -->
+    <section>
+      <div class="col-head">The idea</div>
+      <p class="goal">
+        Measure assembly bias from the <em>full configuration</em> of the three-tracer
+        bispectrum. The <b>opening angle &phi;</b> between the intra-halo pair and the
+        <span class="em">large-scale mode</span> splits the signal into a
+        <b>density</b> response (does richness track overdensity?) and a
+        <span class="em">tidal</span> response (do satellites align with the large-scale tidal field?).
+      </p>
+
+      <figure>
+        <svg class="diagram" viewBox="0 0 560 176" role="img" aria-label="Squeezed configuration: a cluster and its satellite form a close 1-halo pair at opening angle phi to a distant field galaxy that carries the long-wavelength density mode.">
+          <defs>
+            <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#4fc3d6" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#4fc3d6" stop-opacity="0.16"/>
+              <stop offset="1" stop-color="#4fc3d6" stop-opacity="0"/>
+            </linearGradient>
+            <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#d99a1f" stop-opacity="0.14"/>
+              <stop offset="0.7" stop-color="#d99a1f" stop-opacity="0.05"/>
+              <stop offset="1" stop-color="#d99a1f" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <!-- long-wavelength mode: filled sine band -->
+          <path d="M0,120 C70,80 140,80 210,120 C280,160 350,160 420,120 C490,80 560,80 630,120 L630,176 L0,176 Z"
+                fill="url(#wave)"/>
+          <path class="st-cyan" d="M0,120 C70,80 140,80 210,120 C280,160 350,160 420,120 C490,80 560,80 630,120"
+                fill="none" stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="1 5" stroke-linecap="round"/>
+          <text class="s-cyanink" x="548" y="158" text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="12" letter-spacing="1">&delta;<tspan baseline-shift="sub" font-size="8">L</tspan>  &mdash; long mode</text>
+
+          <!-- cluster halo -->
+          <circle cx="128" cy="96" r="56" fill="url(#halo)"/>
+          <circle class="st-gold" cx="128" cy="96" r="56" fill="none" stroke-opacity="0.5" stroke-width="1.4" stroke-dasharray="4 5"/>
+          <text class="s-goldink" x="128" y="28" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" letter-spacing="1.5">CLUSTER HALO &middot; R_vir</text>
+
+          <!-- long connector to field galaxy (c -> f leg) -->
+          <line class="st-cyan" x1="128" y1="96" x2="466" y2="81" stroke-opacity="0.8" stroke-width="1.6" stroke-dasharray="6 5"/>
+          <text class="s-cyanink" x="332" y="72" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10.5">r ~ 1/k_long</text>
+
+          <!-- 1-halo pair connector (c -> s leg) -->
+          <line class="st-gold" x1="128" y1="96" x2="148" y2="68" stroke-width="2"/>
+
+          <!-- opening angle arc + label -->
+          <path class="st-ink" d="M156,94.7 A28,28 0 0 0 144.3,73.2" fill="none" stroke-opacity="0.7" stroke-width="1.3"/>
+          <text class="s-ink" x="171" y="87" text-anchor="middle" font-family="'Newsreader',serif" font-style="italic" font-size="15">&phi;</text>
+
+          <!-- cluster centre (BCG) : star -->
+          <path class="s-gold st-cut" d="M128,87 l3.1,6.3 6.9,1 -5,4.9 1.2,6.9 -6.2,-3.3 -6.2,3.3 1.2,-6.9 -5,-4.9 6.9,-1 z"
+                stroke-width="0.6"/>
+          <!-- satellite -->
+          <circle class="s-gold" cx="148" cy="68" r="5.5"/>
+          <circle class="st-cut" cx="148" cy="68" r="5.5" fill="none" stroke-width="0.8"/>
+          <text class="s-goldink" x="160" y="60" text-anchor="start" font-family="'IBM Plex Mono',monospace" font-size="9.5">satellite</text>
+
+          <text class="s-ink" x="118" y="128" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11">1-halo pair</text>
+          <text class="s-muted" x="118" y="141" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="9.5">r &laquo; R_vir</text>
+
+          <!-- field galaxy -->
+          <circle class="s-cyan" cx="470" cy="80" r="6"/>
+          <circle class="st-cyan" cx="470" cy="80" r="12" fill="none" stroke-opacity="0.5" stroke-width="1"/>
+          <text class="s-cyanink" x="470" y="110" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11">field galaxy</text>
+        </svg>
+        <figcaption>The opening angle &phi; between the intra-halo pair and the large-scale mode carries the density (&#8467;=0) vs. tidal (&#8467;=2) response.</figcaption>
+      </figure>
+    </section>
+
+    <!-- RIGHT : the estimator -->
+    <section>
+      <div class="col-head">The estimator &mdash; what to do</div>
+      <ol class="steps">
+        <li><p>Measure the <b>angle-resolved</b> 3-point cross-correlation <span class="k">&zeta;(s, r, &phi;)</span> &mdash; keep the opening angle, don't collapse it.</p></li>
+        <li><p>Decompose in multipoles of <span class="k">&phi;</span> (equivalently the bispectrum in <span class="k">&mu; = k&#770;&middot;q&#770;</span>).</p></li>
+        <li><p><b>&#8467;=0</b> &rarr; <span class="k">b_occ</span>: richness vs. overdensity. <b>&#8467;=2</b> &rarr; <span class="k">b_K</span>: satellites vs. the large-scale tidal field.</p></li>
+        <li><p>Subtract the mass bias <span class="k">b_c</span>; validate with a <b>shuffling null test</b> in mocks.</p></li>
+      </ol>
+
+      <div class="eqbox">
+        <div class="lab">The observable</div>
+        <div class="eq">
+          B<sub>csf</sub>(k, q; &phi;) &rarr; [ b<sub>c</sub> + <span class="big">b<sub>occ</sub></span> + <span class="cy">b<sub>K</sub></span>(cos&sup2;&phi; &minus; &#8531;) ] P(k)P(q)
+          <span class="note">the opening angle splits it: &#8467;=0 &rarr; <span style="color:var(--gold-ink)">b<sub>occ</sub></span> (density-type), &#8467;=2 &rarr; <span style="color:var(--cyan-ink)">b<sub>K</sub></span> (tidal-type). Either, non-zero at fixed mass, <em>is</em> assembly bias.</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ FOOTER ============ -->
+  <div class="footer">
+    <div class="fitem">
+      <div class="ft">Deliverables</div>
+      <p>Estimator + Fisher forecast + a mock-validated measurement pipeline.</p>
+    </div>
+    <div class="fitem">
+      <div class="ft">Data</div>
+      <p>DESI &amp; Rubin/LSST galaxies with eROSITA, SPT-3G &amp; redsequence clusters.</p>
+    </div>
+    <div class="fitem warn">
+      <div class="ft">Key systematic</div>
+      <p>Projection mostly hits <b>&#8467;=0</b>; the <b>&#8467;=2</b> tidal term &amp; a shuffling null test are the controls.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  (function(){
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    if(!btn) return;
+    function effective(){
+      var ds = root.getAttribute('data-theme');
+      if(ds === 'dark' || ds === 'light') return ds;
+      return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    btn.addEventListener('click', function(){
+      root.setAttribute('data-theme', effective() === 'dark' ? 'light' : 'dark');
+    });
+  })();
+</script>
