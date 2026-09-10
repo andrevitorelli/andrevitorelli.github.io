@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Fixed-Mass Split — MARC-HI (landscape)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#e2e7ec;
+    --surface:#ffffff;
+    --surface-2:#f2f6f9;
+    --ink:#111820;
+    --muted:#57646f;
+    --faint:#8593a0;
+    --line:#d5dde4;
+    --line-strong:#c2ccd6;
+    --hi:#0a8a97;
+    --hi-soft:rgba(10,138,151,.14);
+    --gx:#c1571f;
+    --gx-soft:rgba(193,87,31,.13);
+    --band:rgba(193,87,31,.14);
+    --shadow:0 2px 6px rgba(17,24,32,.08),0 30px 70px -30px rgba(17,24,32,.45);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#070b0f;
+      --surface:#111823;
+      --surface-2:#0d141d;
+      --ink:#e8eef4;
+      --muted:#93a2b1;
+      --faint:#63727f;
+      --line:#1f2b39;
+      --line-strong:#2c3b4b;
+      --hi:#34cfce;
+      --hi-soft:rgba(52,207,206,.15);
+      --gx:#f0924e;
+      --gx-soft:rgba(240,146,78,.14);
+      --band:rgba(240,146,78,.16);
+      --shadow:0 2px 6px rgba(0,0,0,.5),0 34px 80px -30px rgba(0,0,0,.85);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#070b0f;
+    --surface:#111823;
+    --surface-2:#0d141d;
+    --ink:#e8eef4;
+    --muted:#93a2b1;
+    --faint:#63727f;
+    --line:#1f2b39;
+    --line-strong:#2c3b4b;
+    --hi:#34cfce;
+    --hi-soft:rgba(52,207,206,.15);
+    --gx:#f0924e;
+    --gx-soft:rgba(240,146,78,.14);
+    --band:rgba(240,146,78,.16);
+    --shadow:0 2px 6px rgba(0,0,0,.5),0 34px 80px -30px rgba(0,0,0,.85);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Newsreader",Georgia,serif;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  .stage{position:fixed;inset:0}
+  .slide{
+    position:absolute;left:50%;top:50%;
+    transform-origin:center center;
+    width:1280px;height:720px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:42px 52px 40px;
+    display:flex;flex-direction:column;gap:13px;
+    overflow:hidden;
+  }
+
+  /* masthead */
+  .top{display:flex;justify-content:space-between;align-items:center;gap:16px}
+  .brand{display:flex;flex-direction:column;gap:4px}
+  .codename{
+    font-family:"IBM Plex Mono",monospace;font-weight:600;letter-spacing:.14em;font-size:14px;
+    color:var(--hi);display:inline-flex;align-items:center;gap:9px;
+  }
+  .codename .dot{width:8px;height:8px;border-radius:50%;background:var(--hi);box-shadow:0 0 0 4px var(--hi-soft)}
+  .expand{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.04em;color:var(--faint);text-transform:uppercase}
+  .toggle{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.08em;color:var(--muted);
+    background:var(--surface-2);border:1px solid var(--line);border-radius:999px;
+    padding:8px 14px 8px 12px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+    transition:border-color .15s,color .15s;
+  }
+  .toggle:hover{border-color:var(--line-strong);color:var(--ink)}
+  .toggle svg{width:14px;height:14px;display:block}
+  .toggle:focus-visible{outline:2px solid var(--hi);outline-offset:2px}
+
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--muted);
+    display:flex;flex-wrap:wrap;gap:6px 15px;align-items:center;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0;
+  }
+  .eyebrow b{color:var(--ink);font-weight:600}
+  .eyebrow .sep{color:var(--faint)}
+
+  h1{
+    font-family:"Archivo",system-ui,sans-serif;font-weight:800;
+    font-size:36px;line-height:1.02;letter-spacing:-.02em;text-wrap:balance;
+    margin:0;max-width:34ch;
+  }
+  h1 .g{color:var(--gx)}
+  h1 .h{color:var(--hi)}
+
+  /* body */
+  .body{flex:1;display:grid;grid-template-columns:0.9fr 1.1fr;gap:32px;min-height:0}
+  .left{display:flex;flex-direction:column;min-height:0}
+  .lead{font-size:13px;color:var(--muted);margin:0;max-width:54ch;line-height:1.4}
+  .lead em{color:var(--ink);font-style:italic}
+
+  .steps{list-style:none;padding:0;margin:11px 0 0;display:flex;flex-direction:column;gap:8px}
+  .steps li{display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:baseline}
+  .num{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:12px;color:var(--hi);letter-spacing:.06em}
+  .steps h3{font-family:"Archivo",sans-serif;font-weight:700;font-size:13.5px;letter-spacing:-.01em;margin:0 0 1px;color:var(--ink)}
+  .steps p{margin:0;font-size:12px;color:var(--muted);line-height:1.34}
+  .steps .mono{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink);font-style:normal}
+
+  .est{
+    font-family:"IBM Plex Mono",monospace;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+    padding:10px 13px;margin-top:9px;display:flex;flex-direction:column;gap:6px;
+    font-size:11.5px;font-variant-numeric:tabular-nums;
+  }
+  .est .row{display:flex;gap:10px;align-items:baseline;color:var(--ink)}
+  .est .k{color:var(--faint);font-size:10px;letter-spacing:.1em;text-transform:uppercase;min-width:66px;flex:none;padding-top:1px}
+  .est b{color:var(--gx);font-weight:600}
+  .est .teal{color:var(--hi)}
+  sub{font-size:.72em}
+
+  /* chart panel */
+  .right{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px 12px;display:flex;flex-direction:column;min-height:0}
+  .right .cwrap{flex:1;min-height:0;display:flex;justify-content:center}
+  svg.chart{height:100%;width:auto;max-width:100%;display:block}
+  .cap{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);line-height:1.4;margin-top:8px}
+  .cap b{color:var(--ink);font-weight:600}
+
+  .chart .grid{stroke:var(--line);stroke-width:1}
+  .chart .axis{stroke:var(--line-strong);stroke-width:1.4}
+  .chart .tick{fill:var(--faint);font-family:"IBM Plex Mono",monospace;font-size:12px}
+  .chart .atitle{fill:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:12.5px;letter-spacing:.02em}
+  .chart .univ{stroke:var(--faint);stroke-width:2;fill:none;stroke-dasharray:2 6;stroke-linecap:round}
+  .chart .lineH{stroke:var(--hi);stroke-width:2.4;fill:none}
+  .chart .lineG{stroke:var(--gx);stroke-width:2.4;fill:none}
+  .chart .band{fill:var(--band)}
+  .chart .errH{stroke:var(--hi);stroke-width:1.6}
+  .chart .errG{stroke:var(--gx);stroke-width:1.6}
+  .chart .dotH{fill:var(--hi)}
+  .chart .dotG{fill:var(--gx)}
+  .chart .lg{fill:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+  .chart .anno{fill:var(--gx);font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500}
+  .chart .lead-line{stroke:var(--gx);stroke-width:1.2;stroke-dasharray:2 3}
+
+  /* strip */
+  .strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .cell{background:var(--surface);padding:11px 16px;display:flex;flex-direction:column;gap:5px}
+  .cell .lab{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--hi)}
+  .cell.gx .lab{color:var(--gx)}
+  .cell p{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
+  .cell p b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="stage">
+  <section class="slide" id="slide">
+
+    <div class="top">
+      <div class="brand">
+        <span class="codename"><span class="dot"></span>MARC&#8209;HI</span>
+        <span class="expand">Mass-controlled Assembly-bias · Residual Clustering in HI</span>
+      </div>
+      <button class="toggle" id="themeBtn" type="button" aria-label="Toggle colour theme">
+        <svg id="icoSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>
+        <svg id="icoMoon" viewBox="0 0 24 24" fill="currentColor" hidden><path d="M20 14.2A8 8 0 1 1 9.8 4 6.3 6.3 0 0 0 20 14.2Z"/></svg>
+        <span id="themeLbl">LIGHT</span>
+      </button>
+    </div>
+
+    <div class="eyebrow">
+      <span>21&nbsp;cm intensity mapping <b>&times;</b> spectroscopic groups</span>
+      <span class="sep">·</span>
+      <span><b>z &#8776; 0.1&ndash;0.4</b></span>
+      <span class="sep">·</span>
+      <span>&nu; &#8776; 1015&ndash;1291&nbsp;MHz</span>
+      <span class="sep">·</span>
+      <span>single-slide concept &mdash; for discussion</span>
+    </div>
+
+    <h1>One <span class="h">b(M)</span>. Two tracers. The <span class="g">residual</span> is assembly bias.</h1>
+
+    <div class="body">
+      <div class="left">
+        <p class="lead">Mass-only occupation is the null: absent assembly bias, <em>every</em> tracer of a halo of mass M<sub>h</sub> shares one large-scale bias b(M<sub>h</sub>). HI is the sharpest secondary axis we have, so comparing an HI field and a galaxy field <em>at fixed host mass</em> isolates the secondary dependence directly in bias space.</p>
+
+        <ol class="steps">
+          <li><span class="num">01</span><div><h3>Bin by host halo mass</h3><p>Group spec-z galaxies; calibrate M<sub>h</sub> by stacked g&ndash;g lensing. Split the 21&nbsp;cm field by the same proxy via HI&ndash;optical cross-ID.</p></div></li>
+          <li><span class="num">02</span><div><h3>Measure each bias per bin</h3><p><span class="mono">b<sub>g</sub></span> from P<sub>gg</sub>; <span class="mono">b<sub>HI</sub></span> from the foreground-immune cross P<sub>g,HI</sub>/P<sub>gg</sub>, at k &#8818; 0.1&nbsp;h&nbsp;Mpc<sup>&#8722;1</sup>.</p></div></li>
+          <li><span class="num">03</span><div><h3>Test for a split</h3><p>One universal curve is the null; <span class="mono">b<sub>HI</sub>(M<sub>h</sub>) &#8800; b<sub>g</sub>(M<sub>h</sub>)</span> &#8658; assembly bias. Cross-check with M(r) and r(k).</p></div></li>
+        </ol>
+
+        <div class="est">
+          <div class="row"><span class="k">per bin</span><span><span class="teal">b<sub>HI</sub></span> / <b>b<sub>g</sub></b> = P<sub>g,HI</sub> / P<sub>gg</sub> &nbsp;(no &sigma;&#8328; prior)</span></div>
+          <div class="row"><span class="k">signal</span><span>&Delta;b<sub>AB</sub>(M<sub>h</sub>) &#8801; <span class="teal">b<sub>HI</sub></span> &#8722; <b>b<sub>g</sub></b></span></div>
+          <div class="row"><span class="k">marked</span><span>M(r) = [1+W(r)] / [1+&xi;(r)],&nbsp; marks = M<sub>HI</sub></span></div>
+          <div class="row"><span class="k">null</span><span>&Delta;b<sub>AB</sub> = 0,&nbsp; r(k) = 1</span></div>
+        </div>
+      </div>
+
+      <figure class="right" style="margin:0">
+        <div class="cwrap">
+          <svg class="chart" viewBox="0 0 640 424" role="img" aria-label="Large-scale bias versus host halo mass: HI and galaxy tracers split away from the universal mass-only curve.">
+            <line class="grid" x1="64" y1="341.8" x2="616" y2="341.8"/>
+            <line class="grid" x1="64" y1="211.1" x2="616" y2="211.1"/>
+            <line class="grid" x1="64" y1="80.3" x2="616" y2="80.3"/>
+            <path class="band" d="M182.3,305.2 L280.9,260.8 L379.4,204.5 L478,130 L478,204.5 L379.4,263.4 L280.9,305.2 L182.3,335.3 Z"/>
+            <path class="univ" d="M103.4,335.3 L202,315.7 L300.6,283 L399.1,230.7 L497.7,152.2 L596.3,67.2"/>
+            <path class="lineG" d="M182.3,305.2 L280.9,260.8 L379.4,204.5 L478,130"/>
+            <g class="errG">
+              <line x1="182.3" y1="294.7" x2="182.3" y2="315.7"/><line x1="280.9" y1="249" x2="280.9" y2="272.6"/><line x1="379.4" y1="191.4" x2="379.4" y2="217.6"/><line x1="478" y1="114.3" x2="478" y2="145.7"/>
+            </g>
+            <g class="dotG">
+              <circle cx="182.3" cy="305.2" r="4"/><circle cx="280.9" cy="260.8" r="4"/><circle cx="379.4" cy="204.5" r="4"/><circle cx="478" cy="130" r="4"/>
+            </g>
+            <path class="lineH" d="M182.3,335.3 L280.9,305.2 L379.4,263.4 L478,204.5"/>
+            <g class="errH">
+              <line x1="182.3" y1="322.2" x2="182.3" y2="348.4"/><line x1="280.9" y1="290.8" x2="280.9" y2="319.6"/><line x1="379.4" y1="247.7" x2="379.4" y2="279.1"/><line x1="478" y1="186.2" x2="478" y2="222.8"/>
+            </g>
+            <g class="dotH">
+              <circle cx="182.3" cy="335.3" r="4"/><circle cx="280.9" cy="305.2" r="4"/><circle cx="379.4" cy="263.4" r="4"/><circle cx="478" cy="204.5" r="4"/>
+            </g>
+            <line class="lead-line" x1="500" y1="290" x2="424" y2="212"/>
+            <text class="anno" x="506" y="296">&Delta;b<tspan dy="3" font-size="10">AB</tspan><tspan dy="-3">(M</tspan><tspan dy="3" font-size="10">h</tspan><tspan dy="-3">)</tspan></text>
+            <line class="axis" x1="64" y1="28" x2="64" y2="368"/>
+            <line class="axis" x1="64" y1="368" x2="616" y2="368"/>
+            <text class="tick" x="54" y="345.8" text-anchor="end">1</text>
+            <text class="tick" x="54" y="215.1" text-anchor="end">2</text>
+            <text class="tick" x="54" y="84.3" text-anchor="end">3</text>
+            <text class="atitle" transform="rotate(-90 22 198)" x="22" y="198" text-anchor="middle">large-scale bias  b</text>
+            <text class="tick" x="103.4" y="388" text-anchor="middle">12</text>
+            <text class="tick" x="300.6" y="388" text-anchor="middle">13</text>
+            <text class="tick" x="497.7" y="388" text-anchor="middle">14</text>
+            <text class="atitle" x="340" y="414" text-anchor="middle">log&#8321;&#8320; ( M&#8202;<tspan font-size="10" dy="3">h</tspan><tspan dy="-3"> / M</tspan><tspan font-size="10" dy="3">&#8857;</tspan><tspan dy="-3"> h&#8315;&#185; )</tspan></text>
+            <g transform="translate(82,40)">
+              <circle class="dotG" cx="6" cy="0" r="4"/><text class="lg" x="17" y="4">galaxies (spec-z)</text>
+              <circle class="dotH" cx="6" cy="22" r="4"/><text class="lg" x="17" y="26">HI (21 cm)</text>
+              <line class="univ" x1="0" y1="43" x2="12" y2="43"/><text class="lg" x="17" y="47">mass-only  b(M)</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption class="cap">Forecast. At fixed host mass the two tracers do <b>not</b> share one curve &mdash; the shaded gap is the assembly-bias signal &Delta;b<sub>AB</sub>(M<sub>h</sub>), gas-rich HI hosts sitting below optical galaxies. A mass-only mock returns both series onto the dashed curve.</figcaption>
+      </figure>
+    </div>
+
+    <div class="strip">
+      <div class="cell">
+        <span class="lab">Data</span>
+        <p>MeerKLASS / SKA-MID single-dish 21&nbsp;cm <b>&times;</b> DESI&nbsp;BGS + GAMA groups. Host masses from group catalogues and stacked g&ndash;g lensing (<b>KiDS / DES / LSST</b>) over &#8776;10&#179;&nbsp;deg&#178;.</p>
+      </div>
+      <div class="cell gx">
+        <span class="lab">Forecast signal</span>
+        <p>Expected <b>|&Delta;b<sub>AB</sub>|/b &#8776; 5&ndash;15%</b> across 10&#185;&#178;&ndash;10&#185;&#8308;&nbsp;M<sub>&#8857;</sub>h&#8315;&#185;; roughly <b>4&ndash;6&sigma; per dex</b>. Blind nulls: r(k)&#8594;1 and a single b(M).</p>
+      </div>
+      <div class="cell">
+        <span class="lab">Payoff</span>
+        <p>First bias-space detection of <b>gas-driven assembly bias at fixed halo mass</b>; a direct prior on HOD secondary parameters and on 21&nbsp;cm bias systematics for Stage-IV surveys.</p>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,
+      slide=document.getElementById("slide"),
+      btn=document.getElementById("themeBtn"),
+      lbl=document.getElementById("themeLbl"),
+      sun=document.getElementById("icoSun"),
+      moon=document.getElementById("icoMoon");
+
+  /* scale the fixed 16:9 slide to fit the window */
+  function fit(){
+    var m=32;
+    var s=Math.min((window.innerWidth-m)/1280,(window.innerHeight-m)/720);
+    slide.style.transform="translate(-50%,-50%) scale("+s+")";
+  }
+  window.addEventListener("resize",fit);
+  fit();
+
+  /* theme */
+  function sysDark(){return window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches;}
+  function stored(){try{return localStorage.getItem("marchi-theme");}catch(e){return null;}}
+  function current(){var t=root.getAttribute("data-theme");if(t)return t;return sysDark()?"dark":"light";}
+  function paint(mode){var dark=mode==="dark";sun.hidden=dark;moon.hidden=!dark;lbl.textContent=dark?"DARK":"LIGHT";}
+  var init=stored();
+  if(init==="dark"||init==="light"){root.setAttribute("data-theme",init);}
+  paint(current());
+  btn.addEventListener("click",function(){
+    var next=current()==="dark"?"light":"dark";
+    root.setAttribute("data-theme",next);
+    try{localStorage.setItem("marchi-theme",next);}catch(e){}
+    paint(next);
+  });
+  if(window.matchMedia){try{window.matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){if(!root.getAttribute("data-theme"))paint(current());});}catch(e){}}
+})();
+</script>
+</body>
+</html>
