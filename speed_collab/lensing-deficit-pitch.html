@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Locating the Lensing Deficit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* ---------- Tokens: light is the base; dark overrides only the values ---------- */
+:root{
+  --bg:#e9edf4; --slide:#ffffff; --panel:#f3f6fb; --panel2:#eef2f9;
+  --ink:#161d2b; --muted:#57607a; --faint:#8b93a8;
+  --line:#dce2ee; --line-strong:#c6cfde;
+  --kappa:#0d7fa6;   /* CMB lensing */
+  --gamma:#bd6a1c;   /* galaxy shear */
+  --good:#137a55;    /* on-null / real matter */
+  --deficit:#bd3350; /* systematic */
+  --shadow:0 18px 50px -22px rgba(20,30,55,.35);
+  --grid:#e6ebf4;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#070a11; --slide:#111722; --panel:#161d2a; --panel2:#1b2434;
+    --ink:#e9edf6; --muted:#9aa3b8; --faint:#6f7891;
+    --line:#25303f; --line-strong:#33415a;
+    --kappa:#5ec8e8; --gamma:#ecab63; --good:#4fd0a6; --deficit:#f0687f;
+    --shadow:0 24px 60px -26px rgba(0,0,0,.7);
+    --grid:#202a3a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#070a11; --slide:#111722; --panel:#161d2a; --panel2:#1b2434;
+  --ink:#e9edf6; --muted:#9aa3b8; --faint:#6f7891;
+  --line:#25303f; --line-strong:#33415a;
+  --kappa:#5ec8e8; --gamma:#ecab63; --good:#4fd0a6; --deficit:#f0687f;
+  --shadow:0 24px 60px -26px rgba(0,0,0,.7);
+  --grid:#202a3a;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 82% -8%, color-mix(in srgb, var(--kappa) 12%, transparent), transparent 60%),
+    radial-gradient(900px 520px at -6% 108%, color-mix(in srgb, var(--gamma) 10%, transparent), transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  padding:clamp(14px,2.4vw,34px);
+}
+
+.stage{width:100%; max-width:1220px;}
+
+.slide{
+  position:relative;
+  background:linear-gradient(180deg, color-mix(in srgb,var(--slide) 100%, transparent), var(--slide));
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:clamp(20px,2.6vw,40px);
+  overflow:hidden;
+}
+.slide::before{ /* faint lensing-arc motif, top-right */
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background:
+    radial-gradient(520px 520px at 112% -30%, transparent 39%, color-mix(in srgb,var(--kappa) 22%,transparent) 40%, transparent 42%),
+    radial-gradient(560px 560px at 112% -30%, transparent 55%, color-mix(in srgb,var(--kappa) 14%,transparent) 56%, transparent 58%);
+}
+.slide>*{position:relative}
+
+/* ---------- header ---------- */
+.top{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:.7rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--kappa); font-weight:500;
+  display:flex; align-items:center; gap:.6em;
+}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--kappa);box-shadow:0 0 0 4px color-mix(in srgb,var(--kappa) 22%,transparent)}
+.eyebrow .sep{color:var(--faint)}
+
+.toggle{
+  flex:none; display:inline-flex; align-items:center; gap:.5em; cursor:pointer;
+  background:var(--panel); color:var(--muted); border:1px solid var(--line);
+  border-radius:999px; padding:.42em .8em .42em .62em;
+  font-family:"IBM Plex Mono",monospace; font-size:.72rem; letter-spacing:.04em;
+  transition:border-color .18s, color .18s, background .18s;
+}
+.toggle:hover{border-color:var(--line-strong); color:var(--ink)}
+.toggle:focus-visible{outline:2px solid var(--kappa); outline-offset:2px}
+.toggle svg{width:15px;height:15px;display:block}
+.toggle .moon{display:none}
+:root[data-theme="dark"] .toggle .sun,
+:root:not([data-theme="light"]) .toggle .sun{display:none}
+:root[data-theme="dark"] .toggle .moon,
+:root:not([data-theme="light"]) .toggle .moon{display:block}
+@media (prefers-color-scheme:light){ :root:not([data-theme]) .toggle .moon{display:none} :root:not([data-theme]) .toggle .sun{display:block} }
+
+h1{
+  font-family:"Fraunces",Georgia,serif; font-weight:600;
+  font-size:clamp(1.95rem,1.1rem+2.4vw,3rem); line-height:1.02;
+  letter-spacing:-.015em; text-wrap:balance; margin:.1em 0 .38em;
+}
+h1 em{font-style:italic; color:var(--kappa)}
+.dek{max-width:62ch; color:var(--muted); font-size:clamp(.95rem,.9rem+.2vw,1.06rem); line-height:1.5; margin:0}
+.dek b{color:var(--ink); font-weight:600}
+
+/* ---------- main grid ---------- */
+.grid{
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.18fr);
+  gap:clamp(18px,2.2vw,32px); margin-top:clamp(16px,2vw,24px);
+  align-items:start;
+}
+
+.kicker{
+  font-family:"IBM Plex Mono",monospace; font-size:.7rem; letter-spacing:.15em;
+  text-transform:uppercase; color:var(--faint); margin:0 0 .55em;
+}
+
+/* the equation card */
+.eq{
+  background:var(--panel); border:1px solid var(--line); border-radius:13px;
+  padding:16px 18px; margin-bottom:14px;
+}
+.eq .rel{
+  font-family:"IBM Plex Mono",monospace; font-size:clamp(.92rem,.85rem+.35vw,1.12rem);
+  color:var(--ink); line-height:1.5; letter-spacing:-.01em; overflow-x:auto;
+}
+.eq .rel .kap{color:var(--kappa)} .eq .rel .gam{color:var(--gamma)}
+.eq .rel .geo{color:var(--good); font-weight:500}
+.eq .note{margin:.7em 0 0; font-size:.85rem; color:var(--muted); line-height:1.48}
+.eq .note b{color:var(--ink);font-weight:600}
+sub{font-size:.72em}
+
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:2px}
+.chip{
+  font-family:"IBM Plex Mono",monospace; font-size:.72rem; letter-spacing:.01em;
+  border:1px solid var(--line); border-radius:8px; padding:.5em .68em;
+  color:var(--muted); background:var(--slide); line-height:1.15;
+}
+.chip b{color:var(--ink); font-weight:600}
+.chip .role{color:var(--faint); display:block; font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; margin-top:.25em}
+
+/* chart card */
+.chartcard{
+  background:var(--panel); border:1px solid var(--line); border-radius:14px;
+  padding:14px 14px 12px; display:flex; flex-direction:column; gap:10px;
+}
+.chart-title{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.chart-title h3{margin:0; font-family:"IBM Plex Sans"; font-size:.9rem; font-weight:600; letter-spacing:-.01em}
+.chart-title span{font-family:"IBM Plex Mono",monospace; font-size:.66rem; color:var(--faint); letter-spacing:.05em}
+svg.plot{width:100%; height:auto; display:block}
+.ax-label{fill:var(--faint); font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.02em}
+.tick{fill:var(--muted); font-family:"IBM Plex Mono",monospace; font-size:10.5px}
+.gridline{stroke:var(--grid); stroke-width:1}
+.axisline{stroke:var(--line-strong); stroke-width:1.2}
+
+.legend{display:grid; grid-template-columns:1fr 1fr; gap:5px 14px; margin-top:1px}
+.legend .li{display:flex; align-items:center; gap:8px; font-size:.76rem; color:var(--muted); line-height:1.25}
+.legend .li b{color:var(--ink); font-weight:600}
+.swatch{flex:none; width:20px; height:0; border-top-width:3px; border-top-style:solid; border-radius:2px}
+.swatch.band{height:11px; border:none; border-radius:3px; background:color-mix(in srgb,var(--good) 26%,transparent); outline:1px solid color-mix(in srgb,var(--good) 55%,transparent)}
+.swatch.pts{height:11px;border:none;position:relative;background:none}
+.swatch.pts::before{content:"";position:absolute;inset:0 0 auto 0;top:4px;border-top:2px solid color-mix(in srgb,var(--good) 45%,transparent)}
+.swatch.pts::after{content:"";position:absolute;left:8px;top:1.5px;width:6px;height:6px;border-radius:50%;background:var(--good)}
+
+/* ---------- footer: the decision logic ---------- */
+.decide{
+  margin-top:clamp(16px,2vw,22px); border-top:1px solid var(--line); padding-top:16px;
+  display:grid; grid-template-columns:1fr 1fr; gap:clamp(14px,2vw,26px);
+}
+.step .sh{display:flex; align-items:center; gap:.6em; margin-bottom:9px}
+.step .num{
+  font-family:"IBM Plex Mono",monospace; font-size:.68rem; font-weight:500;
+  width:1.7em;height:1.7em;display:grid;place-items:center;border-radius:6px;
+  background:color-mix(in srgb,var(--kappa) 16%,transparent); color:var(--kappa);
+}
+.step .sh h4{margin:0; font-size:.82rem; font-weight:600; letter-spacing:-.005em}
+.step .sh h4 small{color:var(--faint); font-weight:400; font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.03em}
+.branch{display:flex; gap:.6em; font-size:.82rem; line-height:1.42; margin:0 0 6px; color:var(--muted)}
+.branch:last-child{margin-bottom:0}
+.branch .arm{flex:none; font-family:"IBM Plex Mono",monospace; font-size:.72rem; padding:.05em .1em}
+.branch b{color:var(--ink); font-weight:600}
+.tag{font-family:"IBM Plex Mono",monospace; font-size:.7rem; padding:.08em .45em; border-radius:5px; white-space:nowrap}
+.tag.g{color:var(--good); background:color-mix(in srgb,var(--good) 15%,transparent)}
+.tag.k{color:var(--kappa); background:color-mix(in srgb,var(--kappa) 15%,transparent)}
+.tag.a{color:var(--gamma); background:color-mix(in srgb,var(--gamma) 16%,transparent)}
+.tag.r{color:var(--deficit); background:color-mix(in srgb,var(--deficit) 15%,transparent)}
+
+.foot{
+  margin-top:16px; padding-top:12px; border-top:1px solid var(--line);
+  display:flex; flex-wrap:wrap; gap:8px 18px; align-items:baseline;
+  font-family:"IBM Plex Mono",monospace; font-size:.7rem; color:var(--faint); letter-spacing:.02em;
+}
+.foot b{color:var(--muted); font-weight:500}
+.foot .pipe{color:var(--line-strong)}
+
+@media (max-width:820px){
+  .grid{grid-template-columns:1fr}
+  .decide{grid-template-columns:1fr; gap:16px}
+  .legend{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="slide">
+
+    <div class="top">
+      <div class="eyebrow">
+        <span class="dot"></span> Short-term project
+        <span class="sep">/</span> 12 months <span class="sep">·</span> public data
+      </div>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>
+        <span id="themeLabel">Theme</span>
+      </button>
+    </div>
+
+    <h1>Locating the lensing deficit with a <em>second source plane at z&#8202;&#8776;&#8202;1100</em></h1>
+    <p class="dek">Galaxy&#8211;galaxy lensing sits <b>20&#8211;40% below</b> the amplitude implied by the same galaxies&#8217; clustering (Leauthaud+&#8201;2017). Lens the <b>identical</b> halos a second time with the CMB and the deficit stops being a mystery amplitude: the two measurements share one surface density &#916;&#931;(R), so their <b>ratio is a null test</b> that says <i>what kind</i> of problem &#8220;lensing is low&#8221; actually is.</p>
+
+    <div class="grid">
+      <!-- LEFT: the idea -->
+      <div class="left">
+        <p class="kicker">The observable</p>
+        <div class="eq">
+          <div class="rel">
+            <span class="kap">&#916;&#931;<sub>&#954;CMB</sub>(R)</span> &#8202;/&#8202; <span class="gam">&#916;&#931;<sub>&#947;</sub>(R)</span>
+            &nbsp;=&nbsp; <span class="geo">&#931;<sub>cr,&#947;</sub> / &#931;<sub>cr,CMB</sub></span>
+            &nbsp;&#8801;&nbsp; <span class="geo">&#8497;<sub>geo</sub>(z<sub>l</sub>)</span>
+          </div>
+          <p class="note">Same lenses, same projected <b>&#916;&#931;(R)</b> &#8594; the mass profile, HOD, galaxy bias <b>and baryonic feedback all cancel</b>. In &#923;CDM the ratio is <b>pure cosmography</b> &#8212; distances only. Any departure is diagnostic, not degenerate.</p>
+        </div>
+
+        <p class="kicker">Data &#8212; all in hand</p>
+        <div class="chips">
+          <div class="chip"><b>DESI DR1 LRGs</b><span class="role">lenses &#183; z&#8202;=&#8202;0.4&#8211;1.1, split</span></div>
+          <div class="chip"><b>DES&#8201;Y6 + HSC&#8201;Y3</b><span class="role">source shear &#947;</span></div>
+          <div class="chip"><b>ACT&#8201;DR6 + Planck&#8201;PR4</b><span class="role">CMB lensing &#954;</span></div>
+        </div>
+        <div class="chips" style="margin-top:8px">
+          <div class="chip" style="border-style:dashed"><b>Method</b><span class="role">matched R-bins &amp; lens weights; cosmographic lensing ratio</span></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: the money chart -->
+      <div class="right">
+        <div class="chartcard">
+          <div class="chart-title">
+            <h3>The ratio is a null test</h3>
+            <span>schematic &#183; forecast errors</span>
+          </div>
+          <svg class="plot" id="plot" viewBox="0 0 620 372" role="img" aria-label="Predicted ratio of CMB-lensing to galaxy-shear amplitude versus projected radius: real-matter deficit sits on the geometric null band, while shear systematics depart from it.">
+            <!-- built by script -->
+          </svg>
+          <div class="legend">
+            <div class="li"><span class="swatch band"></span><span><b>&#923;CDM geometric null</b> &#8212; &#916;&#931; cancels</span></div>
+            <div class="li"><span class="swatch pts"></span><span><b>Forecast ratio</b> &#183; DESI&#215;ACT DR6</span></div>
+            <div class="li"><span class="swatch" style="border-top-color:var(--deficit);border-top-style:dashed"></span><span>if <b>shear m-bias</b> &#8594; flat offset</span></div>
+            <div class="li"><span class="swatch" style="border-top-color:var(--gamma);border-top-style:dashed"></span><span>if <b>IA / photo-z</b> &#8594; small-R tilt</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER: two-step decision -->
+    <div class="decide">
+      <div class="step">
+        <div class="sh"><span class="num">01</span><h4>Read the ratio &nbsp;<small>&#8212; systematics axis</small></h4></div>
+        <p class="branch"><span class="arm">&#8226;</span><span><span class="tag g">on null</span> &nbsp;deficit is <b>real matter</b> &#8212; both lenses drop together; a &#947;-side shear/photo-z artifact is <b>ruled out</b>.</span></p>
+        <p class="branch"><span class="arm">&#8226;</span><span><span class="tag r">off null</span> &nbsp;the deficit lives in <b>&#947;</b>: a <b>flat</b> offset &#8594; multiplicative bias; a <b>tilt</b> &#8594; intrinsic alignments / 1-halo photo-z.</span></p>
+      </div>
+      <div class="step">
+        <div class="sh"><span class="num">02</span><h4>If on null, read A(R,&#8202;z) &nbsp;<small>&#8212; physics axis</small></h4></div>
+        <p class="branch"><span class="arm">&#8226;</span><span><span class="tag a">small R, low z</span> &nbsp;<b>baryonic feedback</b> &#8212; confirm against tSZ/kSZ of the same halos.</span></p>
+        <p class="branch"><span class="arm">&#8226;</span><span><span class="tag k">all R</span> &nbsp;a genuine <b>low S<sub>8</sub></b> / suppressed P(k).</span></p>
+        <p class="branch"><span class="arm">&#8226;</span><span><span class="tag k">into high-z kernel</span> &nbsp;persists where the CMB weights &#8594; <b>new growth physics</b>.</span></p>
+      </div>
+    </div>
+
+    <div class="foot">
+      <b>Why now:</b> ACT DR6 &#215; DESI reach few-% ratio precision per R-bin.
+      <span class="pipe">|</span>
+      <b>Lineage:</b> cosmographic lensing ratio &#8212; Jain &amp; Taylor 2003; Miyatake+ 2017; Singh+ 2017; Prat+ 2019.
+      <span class="pipe">|</span>
+      <b>Deliverable:</b> a scale&#8211;redshift map that assigns &#8220;lensing is low.&#8221;
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle: start on system, click sets explicit ---------- */
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeToggle'), lbl=document.getElementById('themeLabel');
+  function effective(){
+    var t=root.getAttribute('data-theme');
+    if(t) return t;
+    return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+  }
+  function sync(){ lbl.textContent = effective()==='dark' ? 'Dark' : 'Light'; }
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', effective()==='dark'?'light':'dark');
+    sync();
+  });
+  matchMedia('(prefers-color-scheme:dark)').addEventListener('change',sync);
+  sync();
+})();
+
+/* ---------- money chart ---------- */
+(function(){
+  var svg=document.getElementById('plot');
+  var W=620,H=372, padL=48,padR=16,padT=14,padB=40;
+  var x0=-1, x1=Math.log10(20);          // R = 0.1 .. 20  h^-1 Mpc
+  var y0=0.62, y1=1.34;                    // ratio, normalised so null = 1
+  var pw=W-padL-padR, ph=H-padT-padB;
+  function xp(R){ return padL + (Math.log10(R)-x0)/(x1-x0)*pw; }
+  function yp(v){ return padT + (y1-v)/(y1-y0)*ph; }
+  var NS="http://www.w3.org/2000/svg";
+  function el(n,a){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); return e; }
+  function add(e){ svg.appendChild(e); return e; }
+
+  // y gridlines
+  [0.7,0.8,0.9,1.0,1.1,1.2,1.3].forEach(function(v){
+    add(el('line',{x1:padL,x2:W-padR,y1:yp(v),y2:yp(v),class:'gridline'}));
+    var t=add(el('text',{x:padL-8,y:yp(v)+3.5,'text-anchor':'end',class:'tick'})); t.textContent=v.toFixed(1);
+  });
+  // x ticks
+  [0.1,0.2,0.5,1,2,5,10,20].forEach(function(R){
+    add(el('line',{x1:xp(R),x2:xp(R),y1:padT,y2:H-padB,class:'gridline','stroke-dasharray':'2 4'}));
+    var t=add(el('text',{x:xp(R),y:H-padB+15,'text-anchor':'middle',class:'tick'}));
+    t.textContent = R<1 ? R.toString() : R.toString();
+  });
+  // axes
+  add(el('line',{x1:padL,x2:padL,y1:padT,y2:H-padB,class:'axisline'}));
+  add(el('line',{x1:padL,x2:W-padR,y1:H-padB,y2:H-padB,class:'axisline'}));
+
+  // null band + line
+  add(el('rect',{x:padL,y:yp(1.035),width:pw,height:yp(0.965)-yp(1.035),
+    fill:'color-mix(in srgb,var(--good) 20%,transparent)'}));
+  add(el('line',{x1:padL,x2:W-padR,y1:yp(1.0),y2:yp(1.0),stroke:'var(--good)','stroke-width':1.6}));
+
+  function curve(pts,color,dash){
+    var d=pts.map(function(p,i){return (i?'L':'M')+xp(p[0]).toFixed(1)+' '+yp(p[1]).toFixed(1);}).join(' ');
+    add(el('path',{d:d,fill:'none',stroke:color,'stroke-width':2.2,'stroke-linecap':'round',
+      'stroke-linejoin':'round','stroke-dasharray':dash||''}));
+  }
+  // shear m-bias: flat offset
+  curve([[0.1,1.16],[20,1.16]],'var(--deficit)','6 5');
+  // IA / photo-z: small-R tilt decaying to null
+  curve([[0.1,1.30],[0.2,1.255],[0.35,1.205],[0.6,1.15],[1,1.10],[2,1.055],[4,1.02],[8,1.005],[20,1.0]],'var(--gamma)','6 5');
+
+  // forecast points on the null (the "real matter" outcome), with error bars
+  var pts=[[0.15,1.010,0.055],[0.3,0.988,0.045],[0.6,1.006,0.038],[1.2,0.994,0.036],
+           [2.5,1.004,0.040],[5,1.012,0.050],[10,0.986,0.070]];
+  pts.forEach(function(p){
+    var x=xp(p[0]);
+    add(el('line',{x1:x,x2:x,y1:yp(p[1]-p[2]),y2:yp(p[1]+p[2]),stroke:'var(--good)','stroke-width':1.5}));
+    add(el('line',{x1:x-3,x2:x+3,y1:yp(p[1]-p[2]),y2:yp(p[1]-p[2]),stroke:'var(--good)','stroke-width':1.5}));
+    add(el('line',{x1:x-3,x2:x+3,y1:yp(p[1]+p[2]),y2:yp(p[1]+p[2]),stroke:'var(--good)','stroke-width':1.5}));
+    add(el('circle',{cx:x,cy:yp(p[1]),r:3.6,fill:'var(--good)',stroke:'var(--panel)','stroke-width':1.4}));
+  });
+
+  // axis labels
+  var xl=add(el('text',{x:padL+pw/2,y:H-4,'text-anchor':'middle',class:'ax-label'}));
+  xl.textContent='projected radius  R  [ h⁻¹ Mpc ]';
+  var yl=add(el('text',{x:14,y:padT+ph/2,'text-anchor':'middle',class:'ax-label',
+    transform:'rotate(-90 14 '+(padT+ph/2)+')'}));
+  yl.textContent='ΔΣ_κCMB / ΔΣ_γ   (null = 1)';
+})();
+</script>
+</body>
+</html>
